@@ -16,6 +16,14 @@ import android.util.Log;
 
 import java.util.List;
 
+
+/*
+    TODO:
+        1. Вывести на экране телефона информацию по всем полям (Cell ID, RSRP, RSRQ, TA и т.д.).
+        2. Сохранить данные на на телефоне (формат на свое усмотрение).
+        3. Создать окно с выводом графиков по значению RSRP, RSRQ.
+        4. Отправить данные на сервер.
+ */
 public class MainActivity extends AppCompatActivity {
 
     private String TAG = "CellInfo";
