@@ -37,16 +37,13 @@ public class MainActivity extends AppCompatActivity {
 
         MyListener=new PhoneStateListener(){
             @Override
-            //TODO: create ASK permissions
+            //TODO: create ASK\Accept permissions
             // Without permission it is not working
             public void onSignalStrengthsChanged(SignalStrength Strength){
-                if(ActivityCompat.checkSelfPermission(getBaseContext(),
-                        Manifest.permission.ACCESS_FINE_LOCATION)
-                        != PackageManager.PERMISSION_GRANTED){
+                if(ActivityCompat.checkSelfPermission(getBaseContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
                     return;
                 }
                 List<CellInfo> cellInfoList = tm.getAllCellInfo();
-                Log.d(TAG,String.valueOf(cellInfoList));
                 for(CellInfo cellInfo:cellInfoList){
                     if(cellInfo instanceof CellInfoLte){
                         CellInfoLte cellInfoLte=(CellInfoLte)cellInfo;
@@ -56,9 +53,9 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         // This one is working with permissions
-        Log.d(TAG,"Hello");
-        tm=(TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
-        Log.d(TAG,tm.getNetworkOperatorName().toString());
+        Log.d(TAG, "Hello");
+        tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+        Log.d(TAG, tm.getNetworkOperatorName().toString());
         tm.listen(MyListener,PhoneStateListener.LISTEN_SIGNAL_STRENGTHS);
         Log.d(TAG,"listening");
     }
