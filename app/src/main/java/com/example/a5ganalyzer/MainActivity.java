@@ -29,6 +29,8 @@ public class MainActivity extends AppCompatActivity {
 
         MyListener=new PhoneStateListener(){
             @Override
+            //TODO: create ASK permissions
+            // Without permission it is not working
             public void onSignalStrengthsChanged(SignalStrength Strength){
                 if(ActivityCompat.checkSelfPermission(getBaseContext(),
                         Manifest.permission.ACCESS_FINE_LOCATION)
@@ -45,11 +47,54 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         };
+        // This one is working with permissions
         Log.d(TAG,"Hello");
         tm=(TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
         Log.d(TAG,tm.getNetworkOperatorName().toString());
         tm.listen(MyListener,PhoneStateListener.LISTEN_SIGNAL_STRENGTHS);
         Log.d(TAG,"listening");
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        Log.i(TAG, "On Start");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        Log.i(TAG, "On Resume");
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        Log.i(TAG, "On Pause");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        Log.i(TAG, "On Stop");
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+
+        Log.i(TAG, "On Restart");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        Log.i(TAG, "On Destroy");
     }
 
 }
