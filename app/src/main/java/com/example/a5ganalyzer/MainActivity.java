@@ -66,28 +66,30 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
                 List<CellInfo> cellInfoList = tm.getAllCellInfo();
-                for(CellInfo cellInfo:cellInfoList){
-                    if(cellInfo instanceof CellInfoLte){
-                        CellInfoLte cellInfoLte=(CellInfoLte)cellInfo;
-                        int rsrp=0;
-                        int rsrq=0;
-                        double lat = 0;
-                        double lon = 0;
-                        if(globalLocation!=null) {
-                            lat = globalLocation.getLatitude();
-                            lon = globalLocation.getLongitude();
+                if(cellInfoList != null) {
+                    for (CellInfo cellInfo : cellInfoList) {
+                        if (cellInfo instanceof CellInfoLte) {
+                            CellInfoLte cellInfoLte = (CellInfoLte) cellInfo;
+                            int rsrp = 0;
+                            int rsrq = 0;
+                            double lat = 0;
+                            double lon = 0;
+                            if (globalLocation != null) {
+                                lat = globalLocation.getLatitude();
+                                lon = globalLocation.getLongitude();
+                            }
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                rsrp = cellInfoLte.getCellSignalStrength().getRsrp();
+                                rsrq = cellInfoLte.getCellSignalStrength().getRsrq();
+                            }
+                            Log.d("RSRP", Integer.toString(rsrp));
+                            Log.d("RSRQ", Integer.toString(rsrq));
+                            Date date = java.util.Calendar.getInstance().getTime();
+                            askPermissionAndWriteFile("data", date.toString() + " "
+                                    + Integer.toString(rsrp) + " " + Integer.toString(rsrq) + " "
+                                    + Double.toString(lat) + " "
+                                    + Double.toString(lon) + "\n");
                         }
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            rsrp = cellInfoLte.getCellSignalStrength().getRsrp();
-                            rsrq = cellInfoLte.getCellSignalStrength().getRsrq();
-                        }
-                        Log.d("RSRP",Integer.toString(rsrp));
-                        Log.d("RSRQ",Integer.toString(rsrq));
-                        Date date=java.util.Calendar.getInstance().getTime();
-                        askPermissionAndWriteFile("data",date.toString() + " "
-                                + Integer.toString(rsrp) + " " + Integer.toString(rsrq) + " "
-                                + Double.toString(lat) + " "
-                                + Double.toString(lon)  + "\n");
                     }
                 }
             }
