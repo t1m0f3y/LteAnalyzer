@@ -6,14 +6,25 @@ import androidx.core.app.ActivityCompat;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.telephony.CellInfo;
 import android.telephony.CellInfoLte;
 import android.telephony.PhoneStateListener;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
 import java.util.List;
 
 
@@ -26,6 +37,8 @@ import java.util.List;
  */
 public class MainActivity extends AppCompatActivity {
 
+    private static final int REQUEST_ID_READ_PERMISSION = 100;
+    private static final int REQUEST_ID_WRITE_PERMISSION = 200;
     private String TAG = "CellInfo";
     private PhoneStateListener MyListener;
     TelephonyManager tm;
@@ -47,7 +60,17 @@ public class MainActivity extends AppCompatActivity {
                 for(CellInfo cellInfo:cellInfoList){
                     if(cellInfo instanceof CellInfoLte){
                         CellInfoLte cellInfoLte=(CellInfoLte)cellInfo;
-                        Log.d(TAG,cellInfoLte.getCellSignalStrength().toString());
+                        int rsrp=0;
+                        int rsrq=0;
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            rsrp = cellInfoLte.getCellSignalStrength().getRsrp();
+                            rsrq = cellInfoLte.getCellSignalStrength().getRsrq();
+                        }
+                        Log.d("RSRP",Integer.toString(rsrp));
+                        Log.d("RSRQ",Integer.toString(rsrq));
+                        Date date=java.util.Calendar.getInstance().getTime();
+                        askPermissionAndWriteFile("data",date.toString() + " " + Integer.toString(rsrp) + " " + Integer.toString(rsrq) + "\n");
+
                     }
                 }
             }
@@ -58,6 +81,99 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, tm.getNetworkOperatorName().toString());
         tm.listen(MyListener,PhoneStateListener.LISTEN_SIGNAL_STRENGTHS);
         Log.d(TAG,"listening");
+    }
+
+    private void writeToFile(String fileName,String content) {
+        //File path = getApplicationContext().getFilesDir();
+        //File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+        File path = getAppExternalFilesDir();
+        try {
+            //FileOutputStream writer = new FileOutputStream(new File(path, fileName));
+            FileWriter fr = new FileWriter(new File(path, fileName), true);
+            fr.write(content);
+            fr.close();
+            Log.d("FILE", "wrote to file:" + path + '/' + fileName);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void askPermissionAndWriteFile(String fileName,String content) {
+        boolean canWrite = this.askPermission(REQUEST_ID_WRITE_PERMISSION,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        if(!canWrite)  {
+            Toast.makeText(getApplicationContext(),
+                    "You do not allow this app to write files.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        //
+        this.writeToFile(fileName, content);
+    }
+
+    // With Android Level >= 23, you have to ask the user
+    // for permission with device (For example read/write data on the device).
+    private boolean askPermission(int requestId, String permissionName) {
+
+
+        Log.i("log", "Ask for Permission: " + permissionName);
+        Log.i("log", "Build.VERSION.SDK_INT: " + android.os.Build.VERSION.SDK_INT);
+
+        if (android.os.Build.VERSION.SDK_INT >= 23) {
+
+            // Check if we have permission
+            int permission = ActivityCompat.checkSelfPermission(this, permissionName);
+
+            Log.i("log", "permission: " + permission);
+            Log.i("log", "PackageManager.PERMISSION_GRANTED: " + PackageManager.PERMISSION_GRANTED);
+
+            if (permission != PackageManager.PERMISSION_GRANTED) {
+                // If don't have permission so prompt the user.
+                this.requestPermissions(
+                        new String[]{permissionName},
+                        requestId
+                );
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // As soon as the user decides, allows or doesn't allow.
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        //
+        // Note: If request is cancelled, the result arrays are empty.
+        if (grantResults.length > 0) {
+            switch (requestCode) {
+                case REQUEST_ID_READ_PERMISSION: {
+                    if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                        //readFile();
+                    }
+                }
+                case REQUEST_ID_WRITE_PERMISSION: {
+                    if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                        //writeToFile();
+                    }
+                }
+            }
+        } else {
+            Toast.makeText(getApplicationContext(), "Permission Cancelled!", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    // IMPORTANT!!
+    public File getAppExternalFilesDir()  {
+        if (android.os.Build.VERSION.SDK_INT >= 29) {
+            // /storage/emulated/0/Android/data/org.o7planning.externalstoragedemo/files
+            return this.getExternalFilesDir(null);
+        } else {
+            // @Deprecated in API 29.
+            // /storage/emulated/0
+            return Environment.getExternalStorageDirectory();
+        }
     }
 
     @Override
