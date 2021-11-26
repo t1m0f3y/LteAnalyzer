@@ -1,11 +1,15 @@
 package com.example.a5ganalyzer;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -41,7 +45,12 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_ID_WRITE_PERMISSION = 200;
     private String TAG = "CellInfo";
     private PhoneStateListener MyListener;
+    private LocationListener locationListener;
     TelephonyManager tm;
+    LocationManager locationManager;
+
+    Location globalLocation;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +71,12 @@ public class MainActivity extends AppCompatActivity {
                         CellInfoLte cellInfoLte=(CellInfoLte)cellInfo;
                         int rsrp=0;
                         int rsrq=0;
+                        double lat = 0;
+                        double lon = 0;
+                        if(globalLocation!=null) {
+                            lat = globalLocation.getLatitude();
+                            lon = globalLocation.getLongitude();
+                        }
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             rsrp = cellInfoLte.getCellSignalStrength().getRsrp();
                             rsrq = cellInfoLte.getCellSignalStrength().getRsrq();
@@ -69,18 +84,34 @@ public class MainActivity extends AppCompatActivity {
                         Log.d("RSRP",Integer.toString(rsrp));
                         Log.d("RSRQ",Integer.toString(rsrq));
                         Date date=java.util.Calendar.getInstance().getTime();
-                        askPermissionAndWriteFile("data",date.toString() + " " + Integer.toString(rsrp) + " " + Integer.toString(rsrq) + "\n");
-
+                        askPermissionAndWriteFile("data",date.toString() + " "
+                                + Integer.toString(rsrp) + " " + Integer.toString(rsrq) + " "
+                                + Double.toString(lat) + " "
+                                + Double.toString(lon)  + "\n");
                     }
                 }
             }
         };
+
+        locationListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location loc) {
+                globalLocation = loc;
+                Log.d("location","location changed");
+            }
+        };
+
         // This one is working with permissions
         Log.d(TAG, "Hello");
         tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         Log.d(TAG, tm.getNetworkOperatorName().toString());
         tm.listen(MyListener,PhoneStateListener.LISTEN_SIGNAL_STRENGTHS);
         Log.d(TAG,"listening");
+
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        locationManager.requestLocationUpdates(
+                LocationManager.GPS_PROVIDER, 500, 1, locationListener);
+
     }
 
     private void writeToFile(String fileName,String content) {
