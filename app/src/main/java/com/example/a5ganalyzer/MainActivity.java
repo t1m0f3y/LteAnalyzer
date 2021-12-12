@@ -19,6 +19,7 @@ import android.telephony.PhoneStateListener;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -51,11 +52,15 @@ public class MainActivity extends AppCompatActivity {
 
     Location globalLocation;
 
+    TextView textView;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        textView = findViewById(R.id.text1);
 
         MyListener=new PhoneStateListener(){
             @Override
@@ -89,6 +94,13 @@ public class MainActivity extends AppCompatActivity {
                                     + Integer.toString(rsrp) + " " + Integer.toString(rsrq) + " "
                                     + Double.toString(lat) + " "
                                     + Double.toString(lon) + "\n");
+
+                            textView.setText(cellInfoLte.toString()+"\n"
+                                    + Double.toString(lat) + " "
+                                    + Double.toString(lon) + "\n");
+
+
+
                         }
                     }
                 }
