@@ -21,11 +21,14 @@ import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.URL;
+import java.net.HttpURLConnection;
 import java.net.URLConnection;
 import java.util.Date;
 import java.util.List;
@@ -43,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_ID_READ_PERMISSION = 100;
     private static final int REQUEST_ID_WRITE_PERMISSION = 200;
     private String TAG = "CellInfo";
+    private String HTTP_TAG = "HTTP STATUS";
     private PhoneStateListener MyListener;
     private LocationListener locationListener;
     TelephonyManager tm;
@@ -52,7 +56,8 @@ public class MainActivity extends AppCompatActivity {
 
     TextView textView;
 
-    String url = "http://159.65.87.37/";
+    HttpURLConnection connection;
+    String url = "http://159.65.87.37";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,18 +104,43 @@ public class MainActivity extends AppCompatActivity {
                                     + Double.toString(lon) + "\n");
 
                             try {
-                                URLConnection connection = new URL(url).openConnection();
-                                connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-                                connection.setConnectTimeout(10000);
-                                connection.setDoInput(true);
-                                OutputStreamWriter writer = new OutputStreamWriter(connection.getOutputStream());
-                                String reqBody = Double.toString(lat) + " " + Double.toString(lon);
-                                writer.write(reqBody);
-                                writer.close();
+                                connection = (HttpURLConnection) new URL(url).openConnection();
+                                connection.setRequestMethod("GET");
+                                connection.setUseCaches(false);
+                                connection.setConnectTimeout(5000);
+                                connection.setReadTimeout(5000);
+
+                                connection.connect();
+
+                                StringBuilder sb = new StringBuilder();
+
+                                if(HttpURLConnection.HTTP_OK == connection.getResponseCode()){
+                                    BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+
+                                    String line;
+                                    while((line = in.readLine()) != null){
+                                        sb.append(line);
+                                        sb.append("\n");
+                                    }
+                                    Log.d(HTTP_TAG, sb.toString());
+                                    textView.setText(textView.getText() + "\nHTTP:" + sb.toString());
+                                }else
+                                {
+                                    Log.d(HTTP_TAG, "fail " + connection.getResponseCode() +
+                                            ", " + connection.getResponseMessage());
+                                    textView.setText(textView.getText() + "\nHTTP: fail " + connection.getResponseCode() +
+                                            ", " + connection.getResponseMessage());
+                                }
 
                             } catch (IOException e) {
                                 e.printStackTrace();
+                                Log.d(HTTP_TAG, "connection fail");
                             }
+
+                            if(connection != null){
+                                connection.disconnect();
+                            }
+
                         }
                     }
                 }
