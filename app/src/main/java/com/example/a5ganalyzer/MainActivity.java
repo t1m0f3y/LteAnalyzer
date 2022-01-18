@@ -12,6 +12,7 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.StrictMode;
 import android.telephony.CellInfo;
 import android.telephony.CellInfoLte;
 import android.telephony.PhoneStateListener;
@@ -27,6 +28,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
@@ -64,7 +66,43 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        if (android.os.Build.VERSION.SDK_INT > 9) {
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+            StrictMode.setThreadPolicy(policy);
+        }
+
         textView = findViewById(R.id.text1);
+
+        try {
+            URL myURL = new URL("http://159.65.87.37/");
+
+            HttpURLConnection Connection = (HttpURLConnection) myURL.openConnection();
+            Connection.setRequestMethod("GET");
+            Connection.setDoInput(true);
+            Connection.setDoOutput(true);
+
+            Connection.connect();
+            int responseCode = Connection.getResponseCode();
+            if(responseCode == 200){
+                Log.d(HTTP_TAG, "response code is OK");
+            }
+            else{
+                Log.d(HTTP_TAG, "response code is NOT OK");
+            }
+
+        }
+        catch (MalformedURLException e) {
+            Log.d(HTTP_TAG,"new url failed");
+            e.printStackTrace();
+            // new URL() failed
+            // ...
+        }
+        catch (IOException e) {
+            Log.d(HTTP_TAG, "open connection failed");
+            e.printStackTrace();
+            // openConnection() failed
+            // ...
+        }
 
         MyListener=new PhoneStateListener(){
             @Override
@@ -103,43 +141,7 @@ public class MainActivity extends AppCompatActivity {
                                     + Double.toString(lat) + " "
                                     + Double.toString(lon) + "\n");
 
-                            try {
-                                connection = (HttpURLConnection) new URL(url).openConnection();
-                                connection.setRequestMethod("GET");
-                                connection.setUseCaches(false);
-                                connection.setConnectTimeout(5000);
-                                connection.setReadTimeout(5000);
 
-                                connection.connect();
-
-                                StringBuilder sb = new StringBuilder();
-
-                                if(HttpURLConnection.HTTP_OK == connection.getResponseCode()){
-                                    BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-
-                                    String line;
-                                    while((line = in.readLine()) != null){
-                                        sb.append(line);
-                                        sb.append("\n");
-                                    }
-                                    Log.d(HTTP_TAG, sb.toString());
-                                    textView.setText(textView.getText() + "\nHTTP:" + sb.toString());
-                                }else
-                                {
-                                    Log.d(HTTP_TAG, "fail " + connection.getResponseCode() +
-                                            ", " + connection.getResponseMessage());
-                                    textView.setText(textView.getText() + "\nHTTP: fail " + connection.getResponseCode() +
-                                            ", " + connection.getResponseMessage());
-                                }
-
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                                Log.d(HTTP_TAG, "connection fail");
-                            }
-
-                            if(connection != null){
-                                connection.disconnect();
-                            }
 
                         }
                     }
