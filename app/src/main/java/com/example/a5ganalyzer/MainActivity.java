@@ -27,13 +27,19 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.StringJoiner;
 
 
 /*
@@ -53,6 +59,8 @@ public class MainActivity extends AppCompatActivity {
     private LocationListener locationListener;
     TelephonyManager tm;
     LocationManager locationManager;
+    URL myURL;
+    HttpURLConnection Connection;
 
     Location globalLocation;
 
@@ -72,37 +80,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         textView = findViewById(R.id.text1);
-
-        try {
-            URL myURL = new URL("http://159.65.87.37/");
-
-            HttpURLConnection Connection = (HttpURLConnection) myURL.openConnection();
-            Connection.setRequestMethod("GET");
-            Connection.setDoInput(true);
-            Connection.setDoOutput(true);
-
-            Connection.connect();
-            int responseCode = Connection.getResponseCode();
-            if(responseCode == 200){
-                Log.d(HTTP_TAG, "response code is OK");
-            }
-            else{
-                Log.d(HTTP_TAG, "response code is NOT OK");
-            }
-
-        }
-        catch (MalformedURLException e) {
-            Log.d(HTTP_TAG,"new url failed");
-            e.printStackTrace();
-            // new URL() failed
-            // ...
-        }
-        catch (IOException e) {
-            Log.d(HTTP_TAG, "open connection failed");
-            e.printStackTrace();
-            // openConnection() failed
-            // ...
-        }
 
         MyListener=new PhoneStateListener(){
             @Override
@@ -141,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
                                     + Double.toString(lat) + " "
                                     + Double.toString(lon) + "\n");
 
-
+                            sendData(lat,lon);
 
                         }
                     }
@@ -167,6 +144,65 @@ public class MainActivity extends AppCompatActivity {
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         locationManager.requestLocationUpdates(
                 LocationManager.GPS_PROVIDER, 500, 1, locationListener);
+
+    }
+
+    private void sendData(double lat, double lon){
+
+        try {
+            myURL = new URL("http://159.65.87.37/data.php");
+
+            Connection = (HttpURLConnection) myURL.openConnection();
+            Connection.setRequestMethod("POST");
+
+            Connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; utf-8");
+            Connection.setRequestProperty("Accept", "application/json");
+
+            Connection.setDoOutput(true);
+
+            Map<String,String> arguments = new HashMap<>();
+            StringJoiner joiner = new StringJoiner("&");
+            arguments.put("lat", Double.toString(lat));
+            arguments.put("lon", Double.toString(lon));
+
+            for(Map.Entry<String,String> entry : arguments.entrySet())
+                joiner.add(URLEncoder.encode(entry.getKey(), "UTF-8") + "="
+                        + URLEncoder.encode(entry.getValue(), "UTF-8"));
+
+
+            String inputString = joiner.toString();
+            try(OutputStream os = Connection.getOutputStream()) {
+                byte[] input = inputString.getBytes("utf-8");
+                os.write(input, 0, input.length);
+            }
+
+            Log.d(HTTP_TAG, inputString);
+
+            Connection.connect();
+            int responseCode = Connection.getResponseCode();
+            if(responseCode == 200){
+                Log.d(HTTP_TAG, "response code is OK");
+
+            }
+            else{
+                Log.d(HTTP_TAG, "response code is NOT OK");
+            }
+
+            Connection.disconnect();
+
+        }
+        catch (MalformedURLException e) {
+            Log.d(HTTP_TAG,"new url failed");
+            e.printStackTrace();
+            // new URL() failed
+            // ...
+        }
+        catch (IOException e) {
+            Log.d(HTTP_TAG, "open connection failed");
+            e.printStackTrace();
+            // openConnection() failed
+            // ...
+        }
 
     }
 
