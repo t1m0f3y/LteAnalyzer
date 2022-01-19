@@ -66,9 +66,6 @@ public class MainActivity extends AppCompatActivity {
 
     TextView textView;
 
-    HttpURLConnection connection;
-    String url = "http://159.65.87.37";
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -118,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
                                     + Double.toString(lat) + " "
                                     + Double.toString(lon) + "\n");
 
-                            sendData(lat,lon);
+                            sendData(lat,lon, rsrp, rsrq);
 
                         }
                     }
@@ -147,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void sendData(double lat, double lon){
+    private void sendData(double lat, double lon, int rsrp, int rsrq){
 
         try {
             myURL = new URL("http://159.65.87.37/post_listener.php");
@@ -164,6 +161,8 @@ public class MainActivity extends AppCompatActivity {
             StringJoiner joiner = new StringJoiner("&");
             arguments.put("lat", Double.toString(lat));
             arguments.put("lon", Double.toString(lon));
+            arguments.put("rsrp", Integer.toString(rsrp));
+            arguments.put("rsrq", Integer.toString(rsrq));
 
             for(Map.Entry<String,String> entry : arguments.entrySet())
                 joiner.add(URLEncoder.encode(entry.getKey(), "UTF-8") + "="
