@@ -150,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
     private void sendData(double lat, double lon){
 
         try {
-            myURL = new URL("http://159.65.87.37/data.php");
+            myURL = new URL("http://159.65.87.37/post_listener.php");
 
             Connection = (HttpURLConnection) myURL.openConnection();
             Connection.setRequestMethod("POST");
